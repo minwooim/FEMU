@@ -236,13 +236,14 @@ static void check_params(struct ssdparams *spp)
 
 static void ssd_init_params(struct ssdparams *spp)
 {
+    /* 1TB for 16KB pages */
     spp->secsz = 512;
-    spp->secs_per_pg = 8;
-    spp->pgs_per_blk = 256;
-    spp->blks_per_pl = 256; /* 16GB */
+    spp->secs_per_pg = 32;
+    spp->pgs_per_blk = 1024;
+    spp->blks_per_pl = 256;
     spp->pls_per_lun = 1;
-    spp->luns_per_ch = 8;
-    spp->nchs = 8;
+    spp->luns_per_ch = 16;
+    spp->nchs = 16;
 
     spp->pg_rd_lat = NAND_READ_LATENCY;
     spp->pg_wr_lat = NAND_PROG_LATENCY;
@@ -260,6 +261,7 @@ static void ssd_init_params(struct ssdparams *spp)
     spp->pgs_per_lun = spp->pgs_per_pl * spp->pls_per_lun;
     spp->pgs_per_ch = spp->pgs_per_lun * spp->luns_per_ch;
     spp->tt_pgs = spp->pgs_per_ch * spp->nchs;
+    printf("Total pages: %d\n", spp->tt_pgs);
 
     spp->blks_per_lun = spp->blks_per_pl * spp->pls_per_lun;
     spp->blks_per_ch = spp->blks_per_lun * spp->luns_per_ch;
@@ -364,6 +366,8 @@ void ssd_init(FemuCtrl *n)
 {
     struct ssd *ssd = n->ssd;
     struct ssdparams *spp = &ssd->sp;
+
+    ssd->n = n;
 
     ftl_assert(ssd);
 
