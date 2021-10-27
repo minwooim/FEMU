@@ -20,6 +20,9 @@ int init_dram_backend(SsdDramBackend **mbe, int64_t nbytes)
 
 void free_dram_backend(SsdDramBackend *b)
 {
+    if (!b)
+        return;
+
     if (b->logical_space) {
         munlock(b->logical_space, b->size);
         g_free(b->logical_space);
@@ -32,9 +35,14 @@ int backend_rw(SsdDramBackend *b, QEMUSGList *qsg, uint64_t *lbal, bool is_write
     dma_addr_t sg_cur_byte = 0;
     dma_addr_t cur_addr, cur_len;
     uint64_t mb_oft = lbal[0];
+
+    if (!b)
+        return 0;
+
     void *mb = b->logical_space;
 
     DMADirection dir = DMA_DIRECTION_FROM_DEVICE;
+
 
     if (is_write) {
         dir = DMA_DIRECTION_TO_DEVICE;

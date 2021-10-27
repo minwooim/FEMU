@@ -1,3 +1,5 @@
+#include <sys/sysinfo.h>
+
 #include "qemu/osdep.h"
 #include "hw/qdev-properties.h"
 
@@ -519,6 +521,7 @@ static void femu_realize(PCIDevice *pci_dev, Error **errp)
 {
     FemuCtrl *n = FEMU(pci_dev);
     int64_t bs_size;
+    struct sysinfo sys;
 
     nvme_check_size();
 
@@ -528,8 +531,18 @@ static void femu_realize(PCIDevice *pci_dev, Error **errp)
 
     bs_size = ((int64_t)n->memsz) * 1024 * 1024;
 
-    init_dram_backend(&n->mbe, bs_size);
-    n->mbe->femu_mode = n->femu_mode;
+    sysinfo(&sys);
+
+    /*
+     * If requested size is bigger than the current free memory size, then
+     * initialize it to 1GB and not support data integrity in the backend
+     * DRAM.
+     */
+    printf("freeram=%ld, bs_size=%ld\n", sys.freeram, bs_size);
+    if (bs_size <= sys.freeram) {
+        init_dram_backend(&n->mbe, bs_size);
+        n->mbe->femu_mode = n->femu_mode;
+    }
 
     n->completed = 0;
     n->start_time = time(NULL);
