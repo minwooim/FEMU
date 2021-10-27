@@ -1,4 +1,5 @@
 #include "./zns.h"
+#include "../bbssd/ftl.h"
 
 #define MIN_DISCARD_GRANULARITY     (4 * KiB)
 #define NVME_DEFAULT_ZONE_SIZE      (128 * MiB)
@@ -1155,6 +1156,10 @@ static uint16_t zns_read(FemuCtrl *n, NvmeNamespace *ns, NvmeCmd *cmd,
 
     data_offset = zns_l2b(ns, slba);
 
+    req->slba = slba;
+    req->nlb = nlb;
+    req->status = NVME_SUCCESS;
+
     backend_rw(n->mbe, &req->qsg, &data_offset, req->is_write);
     return NVME_SUCCESS;
 
@@ -1207,6 +1212,10 @@ static uint16_t zns_write(FemuCtrl *n, NvmeNamespace *ns, NvmeCmd *cmd,
     if (status) {
         goto err;
     }
+
+    req->slba = slba;
+    req->nlb = nlb;
+    req->status = NVME_SUCCESS;
 
     backend_rw(n->mbe, &req->qsg, &data_offset, req->is_write);
     zns_finalize_zoned_write(ns, req, false);
@@ -1300,6 +1309,13 @@ static void zns_init(FemuCtrl *n, Error **errp)
     }
 
     zns_init_zone_identify(n, ns, 0);
+
+    /*
+     * Initialize ZNS-specific FTL.
+     */
+    n->ssd = g_malloc0(sizeof(struct ssd));
+    n->ssd->dataplane_started_ptr = &n->dataplane_started;
+    ssd_init(n);
 }
 
 static void zns_exit(FemuCtrl *n)
