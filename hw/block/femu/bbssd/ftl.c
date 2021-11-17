@@ -220,6 +220,9 @@ static struct ppa get_new_page(struct ssd *ssd)
     ppa.g.pl = wpp->pl;
     ftl_assert(ppa.g.pl == 0);
 
+    printf("new_page: ch=%d, chip=%d, blk=%d, page=%d\n",
+		    wpp->ch, wpp->lun, wpp->blk, wpp->pg);
+
     return ppa;
 }
 
@@ -236,14 +239,14 @@ static void check_params(struct ssdparams *spp)
 
 static void ssd_init_params(struct ssdparams *spp)
 {
-    /* 1TB for 16KB pages */
+    /* 512GB for 16KB pages */
     spp->secsz = 512;
     spp->secs_per_pg = 32;
     spp->pgs_per_blk = 1024;
     spp->blks_per_pl = 256;
     spp->pls_per_lun = 1;
     spp->luns_per_ch = 16;
-    spp->nchs = 16;
+    spp->nchs = 8;
 
     spp->pg_rd_lat = NAND_READ_LATENCY;
     spp->pg_wr_lat = NAND_PROG_LATENCY;

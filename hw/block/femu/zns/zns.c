@@ -1309,6 +1309,8 @@ static void zns_init(FemuCtrl *n, Error **errp)
     }
 
     zns_init_zone_identify(n, ns, 0);
+    /* Initialize for 4KB LBA */
+    zns_init_zone_identify(n, ns, 3);
 
     /*
      * Initialize ZNS-specific FTL.
